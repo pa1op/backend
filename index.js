@@ -41,12 +41,17 @@ app.get('/api/persons', (req, res) => {
 
 app.post('/api/persons', (req, res) => {
   const person = req.body
-  if (!req.body) {
+  if (!person.name || !person.number) {
     return res.status(400).json({
-      error: 'content missing'
+      error: 'request must contain name and number'
     })
   }
   person.id = Math.floor(Math.random() * Math.floor(1000))
+  if (persons.map(person => person.name).includes(person.name)) {
+    return res.status(400).json({
+      error: 'name must be unique'
+    })
+  }
   persons = persons.concat(person)
   res.status(201).json(person)
 })
