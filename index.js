@@ -1,8 +1,12 @@
 const express = require('express')
 const bodyParser = require('body-parser')
+const morgan = require('morgan')
 const app = express()
 
+morgan.token('body', (req, res) => JSON.stringify(req.body))
+
 app.use(bodyParser.json())
+app.use(morgan(':method :url :status :response-time ms :body'))
 
 let persons = [
     {
@@ -65,6 +69,12 @@ app.delete('/api/persons/:id', (req, res) => {
   persons = persons.filter((person) => person.id !== Number(req.params.id))
   res.status(204).end()
 })
+
+const unknownEndpoint = (request, response) => {
+  response.status(404).send({ error: 'unknown endpoint' })
+}
+
+app.use(unknownEndpoint)
 
 const PORT = 3001
 app.listen(PORT, () => {
