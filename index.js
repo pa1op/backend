@@ -9,6 +9,7 @@ morgan.token('body', (req, res) => JSON.stringify(req.body))
 app.use(bodyParser.json())
 app.use(morgan(':method :url :status :response-time ms :body'))
 app.use(cors())
+app.use(express.static('build'))
 
 let persons = [
     {
@@ -32,10 +33,6 @@ let persons = [
       "id": 4
     }
 ]
-
-app.get('/', (req, res) => {
-  res.send('<h1>Hello World!</h1>')
-})
 
 app.get('/info', (req, res) => {
   res.end(`Phonebook has  info of ${persons.length} people\n${new Date()}`)
