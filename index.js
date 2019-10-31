@@ -53,19 +53,15 @@ app.get('/api/persons', (req, res) => {
 });
 
 app.post('/api/persons', (req, res) => {
-  const person = req.body;
-  if (!person.name || !person.number) {
-    return res.status(400).json({
-      error: 'request must contain name and number',
-    });
-  }
-  person.id = Math.floor(Math.random() * Math.floor(1000));
+  const person = new Person(req.body);
   if (persons.map((person) => person.name).includes(person.name)) {
     return res.status(400).json({
       error: 'name must be unique',
     });
   }
-  persons = persons.concat(person);
+  person.save().then(() => {
+    console.log(`added ${person.name} number ${person.number} to phonebook!`);
+  });
   return res.status(201).json(person);
 });
 
