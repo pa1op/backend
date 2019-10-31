@@ -11,7 +11,7 @@ const number = process.argv[4];
 
 const url = `mongodb+srv://new-user_31:${password}@cluster0-6n9o6.mongodb.net/test?retryWrites=true&w=majority`;
 
-mongoose.connect(url, { useNewUrlParser: true });
+mongoose.connect(url, { useNewUrlParser: true, useFindAndModify: true });
 
 const personSchema = new mongoose.Schema({
   name: String,
