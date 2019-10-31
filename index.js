@@ -1,9 +1,12 @@
+require('dotenv').config();
 const express = require('express');
 const bodyParser = require('body-parser');
 const morgan = require('morgan');
 const cors = require('cors');
+const Person = require('./models/person');
 
 const app = express();
+
 
 morgan.token('body', (req) => JSON.stringify(req.body));
 
@@ -40,7 +43,13 @@ app.get('/info', (req, res) => {
 });
 
 app.get('/api/persons', (req, res) => {
-  res.json(persons);
+  Person.find({})
+    .then((personsFromDatabase) => {
+      res.json(personsFromDatabase);
+    })
+    .catch((error) => {
+      console.log('error connecting to MongoDB:', error.message);
+    });
 });
 
 app.post('/api/persons', (req, res) => {
