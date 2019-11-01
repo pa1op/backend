@@ -7,7 +7,6 @@ const Person = require('./models/person');
 
 const app = express();
 
-
 morgan.token('body', (req) => JSON.stringify(req.body));
 
 app.use(bodyParser.json());
@@ -29,12 +28,15 @@ app.get('/api/persons', (req, res, next) => {
     .catch((error) => next(error));
 });
 
-app.post('/api/persons', (req, res) => {
+app.post('/api/persons', (req, res, next) => {
   const person = new Person(req.body);
   person.save().then(() => {
     console.log(`added ${person.name} number ${person.number} to phonebook!`);
-  });
-  return res.status(201).json(person);
+  })
+    .then((savedPerson) => {
+      res.status(201).json(savedPerson);
+    })
+    .catch((error) => next(error));
 });
 
 app.put('/api/persons/:id', (req, res, next) => {
@@ -62,7 +64,6 @@ app.get('/api/persons/:id', (req, res, next) => {
 });
 
 app.delete('/api/persons/:id', (req, res, next) => {
-  console.log(req.params.id);
   Person.findByIdAndRemove(req.params.id)
     .then((result) => {
       console.log(`deleted ${result}`);
@@ -77,12 +78,15 @@ const unknownEndpoint = (request, response) => {
 
 app.use(unknownEndpoint);
 
-const errorHandler = (error, request, response, next) => {
+const errorHandler = (error, req, res, next) => {
   if (error.name === 'CastError' && error.kind === 'ObjectId') {
-    return response.status(400).send({ error: 'malformatted id' });
+    return res.status(400).send({ error: 'malformatted id' });
   }
   if (error.name === 'MongoNetworkError') {
-    return response.status(500).send({ error: 'error connecting to database' });
+    return res.status(500).send({ error: 'error connecting to database' });
+  }
+  if (error.name === 'ValidationError') {
+    return res.status(400).send({ error: error.message });
   }
   next(error);
 };
