@@ -15,57 +15,29 @@ app.use(morgan(':method :url :status :response-time ms :body'));
 app.use(cors());
 app.use(express.static('build'));
 
-const persons = [
-  {
-    name: 'Arto Hellas',
-    number: '040-123456',
-    id: 1,
-  },
-  {
-    name: 'Ada Lovelace',
-    number: '39-44-5323523',
-    id: 2,
-  },
-  {
-    name: 'Dan Abramov',
-    number: '12-43-234345',
-    id: 3,
-  },
-  {
-    name: 'Mary Poppendieck',
-    number: '39-23-6423122',
-    id: 4,
-  },
-];
-
 app.get('/info', (req, res) => {
-  res.end(`Phonebook has  info of ${persons.length} people\n${new Date()}`);
+  Person.countDocuments({}, (err, count) => {
+    res.end(`Phonebook has info of ${count} people\n${new Date()}`);
+  });
 });
 
-app.get('/api/persons', (req, res) => {
+app.get('/api/persons', (req, res, next) => {
   Person.find({})
     .then((personsFromDatabase) => {
       res.json(personsFromDatabase);
     })
-    .catch((error) => {
-      console.log('error connecting to MongoDB:', error.message);
-    });
+    .catch((error) => next(error));
 });
 
 app.post('/api/persons', (req, res) => {
   const person = new Person(req.body);
-  if (persons.map((person) => person.name).includes(person.name)) {
-    return res.status(400).json({
-      error: 'name must be unique',
-    });
-  }
   person.save().then(() => {
     console.log(`added ${person.name} number ${person.number} to phonebook!`);
   });
   return res.status(201).json(person);
 });
 
-app.get('/api/persons/:id', (req, res) => {
+app.get('/api/persons/:id', (req, res, next) => {
   Person.findById(req.params.id)
     .then((person) => {
       if (person) {
@@ -74,10 +46,7 @@ app.get('/api/persons/:id', (req, res) => {
         res.status(404).end();
       }
     })
-    .catch((error) => {
-      console.log(error);
-      res.status(400).end();
-    });
+    .catch((error) => next(error));
 });
 
 app.delete('/api/persons/:id', (req, res, next) => {
@@ -95,6 +64,19 @@ const unknownEndpoint = (request, response) => {
 };
 
 app.use(unknownEndpoint);
+
+const errorHandler = (error, request, response, next) => {
+  // db connection error
+  if (error.name === 'CastError' && error.kind === 'ObjectId') {
+    return response.status(400).send({ error: 'malformatted id' });
+  }
+  if (error.name === 'MongoNetworkError') {
+    return response.status(500).send({ error: 'error connecting to database' });
+  }
+  next(error);
+};
+
+app.use(errorHandler);
 
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
