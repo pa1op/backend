@@ -37,6 +37,18 @@ app.post('/api/persons', (req, res) => {
   return res.status(201).json(person);
 });
 
+app.put('/api/persons/:id', (req, res, next) => {
+  const person = {
+    name: req.body.name,
+    number: req.body.number,
+  };
+  Person.findByIdAndUpdate(req.params.id, person, { new: true })
+    .then((updatedPerson) => {
+      res.json(updatedPerson.toJSON());
+    })
+    .catch((error) => next(error));
+});
+
 app.get('/api/persons/:id', (req, res, next) => {
   Person.findById(req.params.id)
     .then((person) => {
@@ -66,7 +78,6 @@ const unknownEndpoint = (request, response) => {
 app.use(unknownEndpoint);
 
 const errorHandler = (error, request, response, next) => {
-  // db connection error
   if (error.name === 'CastError' && error.kind === 'ObjectId') {
     return response.status(400).send({ error: 'malformatted id' });
   }
